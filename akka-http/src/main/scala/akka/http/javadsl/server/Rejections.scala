@@ -10,9 +10,7 @@ import akka.http.scaladsl.model
 import akka.http.scaladsl.server.ContentNegotiator.Alternative
 import akka.http.scaladsl.server._
 import akka.http.javadsl.model._
-import akka.http.javadsl.model.headers.HttpEncoding
-import akka.http.javadsl.model.headers.ByteRange
-import akka.http.javadsl.model.headers.HttpChallenge
+import akka.http.javadsl.model.headers.{ ByteRange, HttpEncoding, HttpChallenge }
 import java.util.Optional
 import java.util.function.{ Function ⇒ JFunction }
 import java.lang.{ Iterable ⇒ JIterable }
@@ -29,8 +27,13 @@ import scala.collection.JavaConverters._
  * A rejection encapsulates a specific reason why a Route was not able to handle a request. Rejections are gathered
  * up over the course of a Route evaluation and finally converted to [[akka.http.scaladsl.model.HttpResponse]]s by the
  * `handleRejections` directive, if there was no way for the request to be completed.
+ *
+ * If providing custom rejections, extend [[CustomRejection]] instead.
  */
 trait Rejection
+
+/** To be extended by user-provided custom rejections, such that they may be consumed in either Java or Scala DSLs. */
+trait CustomRejection extends akka.http.scaladsl.server.Rejection
 
 /**
  * Rejection created by method filters.
@@ -100,6 +103,14 @@ trait MalformedHeaderRejection extends Rejection {
   def headerName: String
   def errorMsg: String
   def getCause: Optional[Throwable]
+}
+
+/**
+ * Rejection created by [[akka.http.scaladsl.server.directives.HeaderDirectives.checkSameOrigin]].
+ * Signals that the request was rejected because `Origin` header value is invalid.
+ */
+trait InvalidOriginRejection extends Rejection {
+  def getInvalidOrigins: java.util.List[akka.http.javadsl.model.headers.HttpOrigin]
 }
 
 /**
@@ -345,8 +356,9 @@ object Rejections {
 
   def requestEntityExpected = RequestEntityExpectedRejection
 
-  def unacceptedResponseContentType(supportedContentTypes: java.lang.Iterable[ContentType],
-                                    supportedMediaTypes: java.lang.Iterable[MediaType]): UnacceptedResponseContentTypeRejection = {
+  def unacceptedResponseContentType(
+    supportedContentTypes: java.lang.Iterable[ContentType],
+    supportedMediaTypes:   java.lang.Iterable[MediaType]): UnacceptedResponseContentTypeRejection = {
     val s1: Set[Alternative] = supportedContentTypes.asScala.map(_.asScala).map(ct ⇒ ContentNegotiator.Alternative(ct)).toSet
     val s2: Set[Alternative] = supportedMediaTypes.asScala.map(_.asScala).map(mt ⇒ ContentNegotiator.Alternative(mt)).toSet
     s.UnacceptedResponseContentTypeRejection(s1 ++ s2)

@@ -26,12 +26,13 @@ import akka.stream.impl.fusing.GraphInterpreterShell
 /**
  * INTERNAL API
  */
-private[akka] case class ActorMaterializerImpl(system: ActorSystem,
-                                               override val settings: ActorMaterializerSettings,
-                                               dispatchers: Dispatchers,
-                                               supervisor: ActorRef,
-                                               haveShutDown: AtomicBoolean,
-                                               flowNames: SeqActorName) extends ActorMaterializer {
+private[akka] case class ActorMaterializerImpl(
+  system:                ActorSystem,
+  override val settings: ActorMaterializerSettings,
+  dispatchers:           Dispatchers,
+  supervisor:            ActorRef,
+  haveShutDown:          AtomicBoolean,
+  flowNames:             SeqActorName) extends ActorMaterializer {
   import akka.stream.impl.Stages._
   private val _logger = Logging.getLogger(system, this)
   override def logger = _logger
@@ -78,8 +79,9 @@ private[akka] case class ActorMaterializerImpl(system: ActorSystem,
   override def materialize[Mat](_runnableGraph: Graph[ClosedShape, Mat]): Mat =
     materialize(_runnableGraph, null)
 
-  private[stream] def materialize[Mat](_runnableGraph: Graph[ClosedShape, Mat],
-                                       subflowFuser: GraphInterpreterShell ⇒ ActorRef): Mat = {
+  private[stream] def materialize[Mat](
+    _runnableGraph: Graph[ClosedShape, Mat],
+    subflowFuser:   GraphInterpreterShell ⇒ ActorRef): Mat = {
     val runnableGraph =
       if (settings.autoFusing) Fusing.aggressive(_runnableGraph)
       else _runnableGraph
@@ -121,7 +123,7 @@ private[akka] case class ActorMaterializerImpl(system: ActorSystem,
           case tls: TlsModule ⇒ // TODO solve this so TlsModule doesn't need special treatment here
             val es = effectiveSettings(effectiveAttributes)
             val props =
-              TLSActor.props(es, tls.sslContext, tls.firstSession, tls.role, tls.closing, tls.hostInfo)
+              TLSActor.props(es, tls.sslContext, tls.sslConfig, tls.firstSession, tls.role, tls.closing, tls.hostInfo)
             val impl = actorOf(props, stageName(effectiveAttributes), es.dispatcher)
             def factory(id: Int) = new ActorPublisher[Any](impl) {
               override val wakeUpMsg = FanOut.SubstreamSubscribePending(id)
@@ -142,7 +144,8 @@ private[akka] case class ActorMaterializerImpl(system: ActorSystem,
 
           case stage: GraphStageModule ⇒
             val graph =
-              GraphModule(GraphAssembly(stage.shape.inlets, stage.shape.outlets, stage.stage),
+              GraphModule(
+                GraphAssembly(stage.shape.inlets, stage.shape.outlets, stage.stage),
                 stage.shape, stage.attributes, Array(stage))
             matGraph(graph, effectiveAttributes, matVal)
         }

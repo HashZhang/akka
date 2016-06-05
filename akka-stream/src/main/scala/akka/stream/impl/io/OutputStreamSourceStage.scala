@@ -122,7 +122,7 @@ final private[stream] class OutputStreamSourceStage(writeTimeout: FiniteDuration
           downstreamStatus.set(Canceled)
           dataQueue.clear()
           // if blocked reading, make sure the take() completes
-          dataQueue.put(ByteString())
+          dataQueue.put(ByteString.empty)
           completeStage()
         }
         override def onPull(): Unit = {
@@ -135,7 +135,7 @@ final private[stream] class OutputStreamSourceStage(writeTimeout: FiniteDuration
             } catch {
               case _: InterruptedException ⇒
                 Thread.interrupted()
-                ByteString()
+                ByteString.empty
             } finally {
               blockingThread = null
             }
@@ -154,10 +154,11 @@ final private[stream] class OutputStreamSourceStage(writeTimeout: FiniteDuration
   }
 }
 
-private[akka] class OutputStreamAdapter(dataQueue: BlockingQueue[ByteString],
-                                        downstreamStatus: AtomicReference[DownstreamStatus],
-                                        sendToStage: (AdapterToStageMessage) ⇒ Future[Unit],
-                                        writeTimeout: FiniteDuration)
+private[akka] class OutputStreamAdapter(
+  dataQueue:        BlockingQueue[ByteString],
+  downstreamStatus: AtomicReference[DownstreamStatus],
+  sendToStage:      (AdapterToStageMessage) ⇒ Future[Unit],
+  writeTimeout:     FiniteDuration)
   extends OutputStream {
 
   var isActive = true
