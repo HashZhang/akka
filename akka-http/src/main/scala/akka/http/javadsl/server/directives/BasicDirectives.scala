@@ -10,10 +10,13 @@ import akka.http.impl.util.JavaMapping
 import akka.http.javadsl.settings.ParserSettings
 import akka.http.javadsl.settings.RoutingSettings
 import akka.japi.Util
+import akka.stream.javadsl.Source
+import akka.util.ByteString
 
 import scala.concurrent.ExecutionContextExecutor
 import akka.http.impl.model.JavaUri
 import akka.http.javadsl.model.HttpRequest
+import akka.http.javadsl.model.HttpEntity
 import akka.http.javadsl.model.RequestEntity
 import akka.http.javadsl.model.Uri
 import akka.http.javadsl.server._
@@ -36,6 +39,7 @@ import akka.event.LoggingAdapter
 import akka.http.javadsl.server
 
 import scala.compat.java8.FutureConverters._
+import scala.concurrent.duration.FiniteDuration
 
 abstract class BasicDirectives {
   import akka.http.impl.util.JavaMapping.Implicits._
@@ -184,7 +188,7 @@ abstract class BasicDirectives {
    * Extracts the current http request entity.
    */
   @CorrespondsTo("extract")
-  def extractEntity(inner: java.util.function.Function[RequestEntity, Route]): Route = RouteAdapter {
+  def extractEntity(inner: JFunction[RequestEntity, Route]): Route = RouteAdapter {
     D.extractRequest { rq ⇒
       inner.apply(rq.entity).delegate
     }
@@ -267,6 +271,43 @@ abstract class BasicDirectives {
    */
   def extractRequestContext(inner: JFunction[RequestContext, Route]) = RouteAdapter {
     D.extractRequestContext { ctx ⇒ inner.apply(JavaMapping.toJava(ctx)(server.RoutingJavaMapping.RequestContext)).delegate }
+  }
+
+  /**
+   * Extracts the entities `dataBytes` [[akka.stream.javadsl.Source]] from the [[akka.http.javadsl.server.RequestContext]].
+   */
+  def extractDataBytes(inner: JFunction[Source[ByteString, Any], Route]) = RouteAdapter {
+    D.extractRequest { ctx ⇒ inner.apply(ctx.entity.dataBytes.asJava).delegate }
+  }
+
+  /**
+   * Extracts the [[akka.http.javadsl.model.RequestEntity]] from the [[akka.http.javadsl.server.RequestContext]].
+   */
+  def extractRequestEntity(inner: JFunction[RequestEntity, Route]): Route = extractEntity(inner)
+
+  /**
+   * WARNING: This will read the entire request entity into memory regardless of size and effectively disable streaming.
+   *
+   * Converts the HttpEntity from the [[akka.http.javadsl.server.RequestContext]] into an
+   * [[akka.http.javadsl.model.HttpEntity.Strict]] and extracts it, or fails the route if unable to drain the
+   * entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   */
+  def extractStrictEntity(timeout: FiniteDuration, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
+    D.extractStrictEntity(timeout) { strict ⇒ inner.apply(strict).delegate }
+  }
+
+  /**
+   * WARNING: This will read the entire request entity into memory regardless of size and effectively disable streaming.
+   *
+   * Extracts the [[akka.http.javadsl.server.RequestContext]] itself with the strict HTTP entity,
+   * or fails the route if unable to drain the entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   */
+  def toStrictEntity(timeout: FiniteDuration, inner: Supplier[Route]): Route = RouteAdapter {
+    D.toStrictEntity(timeout) { inner.get.delegate }
   }
 
 }

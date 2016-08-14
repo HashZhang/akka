@@ -8,8 +8,9 @@ import akka.stream.{ ClosedShape, ActorMaterializer, ActorMaterializerSettings, 
 import akka.stream.scaladsl._
 import akka.stream.testkit._
 import akka.stream.testkit.Utils._
+import akka.stream.impl.ReactiveStreamsCompliance
 import akka.testkit.TestEvent.Mute
-import akka.testkit.{ AkkaSpec, EventFilter, ImplicitSender, TestProbe }
+import akka.testkit.{ EventFilter, ImplicitSender, TestProbe }
 import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
@@ -144,7 +145,7 @@ object ActorPublisherSpec {
 
 }
 
-class ActorPublisherSpec extends AkkaSpec(ActorPublisherSpec.config) with ImplicitSender {
+class ActorPublisherSpec extends StreamSpec(ActorPublisherSpec.config) with ImplicitSender {
 
   import akka.stream.actor.ActorPublisherSpec._
 
@@ -317,7 +318,17 @@ class ActorPublisherSpec extends AkkaSpec(ActorPublisherSpec.config) with Implic
       s.expectSubscription()
       val s2 = TestSubscriber.manualProbe[String]()
       ActorPublisher[String](ref).subscribe(s2)
-      s2.expectSubscriptionAndError().getClass should be(classOf[IllegalStateException])
+      s2.expectSubscriptionAndError().getMessage should be(s"ActorPublisher ${ReactiveStreamsCompliance.SupportsOnlyASingleSubscriber}")
+    }
+
+    "can not subscribe the same subscriber multiple times" in {
+      val probe = TestProbe()
+      val ref = system.actorOf(testPublisherProps(probe.ref))
+      val s = TestSubscriber.manualProbe[String]()
+      ActorPublisher[String](ref).subscribe(s)
+      s.expectSubscription()
+      ActorPublisher[String](ref).subscribe(s)
+      s.expectError().getMessage should be(ReactiveStreamsCompliance.CanNotSubscribeTheSameSubscriberMultipleTimes)
     }
 
     "signal onCompete when actor is stopped" in {

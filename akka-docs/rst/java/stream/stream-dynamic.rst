@@ -1,22 +1,22 @@
-.. _stream-dynamic-scala:
+.. _stream-dynamic-java:
 
 #######################
 Dynamic stream handling
 #######################
 
-.. _kill-switch-scala:
+.. _kill-switch-java:
 
 Controlling graph completion with KillSwitch
 --------------------------------------------
 
 A ``KillSwitch`` allows the completion of graphs of ``FlowShape`` from the outside. It consists of a flow element that
 can be linked to a graph of ``FlowShape`` needing completion control.
-The ``KillSwitch`` trait allows to complete or fail the graph(s).
+The ``KillSwitch`` interface allows to:
 
-.. includecode:: ../../../../akka-stream/src/main/scala/akka/stream/KillSwitch.scala
-   :include: kill-switch
+* complete the graph(s) via ``shutdown()``
+* fail the graph(s) via ``abort(Throwable error)``
 
-After the first call to either ``shutdown`` and ``abort``, all subsequent calls to any of these methods will be ignored.
+After the first call to either ``shutdown`` or ``abort``, all subsequent calls to any of these methods will be ignored.
 Graph completion is performed by both
 
 * completing its downstream
@@ -24,7 +24,7 @@ Graph completion is performed by both
 
 A ``KillSwitch`` can control the completion of one or multiple streams, and therefore comes in two different flavours.
 
-.. _unique-kill-switch-scala:
+.. _unique-kill-switch-java:
 
 UniqueKillSwitch
 ^^^^^^^^^^^^^^^^
@@ -40,7 +40,7 @@ below for usage examples.
 
 .. includecode:: ../code/docs/stream/KillSwitchDocTest.java#unique-abort
 
-.. _shared-kill-switch-scala:
+.. _shared-kill-switch-java:
 
 SharedKillSwitch
 ^^^^^^^^^^^^^^^^

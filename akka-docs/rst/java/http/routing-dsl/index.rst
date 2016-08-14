@@ -18,6 +18,7 @@ To use the high-level API you need to add a dependency to the ``akka-http-experi
    directives/index
    marshalling
    exception-handling
+   source-streaming-support
    rejections
    testkit
    
@@ -32,7 +33,7 @@ Bind failures
 ^^^^^^^^^^^^^
 For example the server might be unable to bind to the given port. For example when the port
 is already taken by another application, or if the port is privileged (i.e. only usable by ``root``).
-In this case the "binding future" will fail immediatly, and we can react to if by listening on the CompletionStage's completion:
+In this case the "binding future" will fail immediately, and we can react to if by listening on the CompletionStage's completion:
 
 .. includecode:: ../../code/docs/http/javadsl/server/HighLevelServerBindFailureExample.java
   :include: binding-failure-high-level-example
@@ -51,7 +52,6 @@ in the :ref:`exception-handling-java` section of the documtnation. You can use t
 
 File uploads
 ^^^^^^^^^^^^
-TODO not possible in Java DSL since there
 
 For high level directives to handle uploads see the :ref:`FileUploadDirectives-java`.
 

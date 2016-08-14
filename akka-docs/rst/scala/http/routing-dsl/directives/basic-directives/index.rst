@@ -17,11 +17,14 @@ on two axes: a) provide a constant value or extract a value from the ``RequestCo
 a single value or a tuple of values.
 
   * :ref:`-extract-`
+  * :ref:`-extractDataBytes-`
   * :ref:`-extractExecutionContext-`
   * :ref:`-extractMaterializer-`
+  * :ref:`-extractStrictEntity-`
   * :ref:`-extractLog-`
   * :ref:`-extractRequest-`
   * :ref:`-extractRequestContext-`
+  * :ref:`-extractRequestEntity-`
   * :ref:`-extractSettings-`
   * :ref:`-extractUnmatchedPath-`
   * :ref:`-extractUri-`
@@ -43,6 +46,7 @@ Transforming the Request(Context)
   * :ref:`-withMaterializer-`
   * :ref:`-withLog-`
   * :ref:`-withSettings-`
+  * :ref:`-toStrictEntity-`
 
 
 .. _Response Transforming Directives:
@@ -94,10 +98,13 @@ Alphabetically
    cancelRejections
    extract
    extractExecutionContext
+   extractDataBytes
    extractMaterializer
+   extractStrictEntity
    extractLog
    extractRequest
    extractRequestContext
+   extractRequestEntity
    extractSettings
    extractUnmatchedPath
    extractUri
@@ -120,6 +127,7 @@ Alphabetically
    recoverRejections
    recoverRejectionsWith
    textract
+   toStrictEntity
    tprovide
    withExecutionContext
    withMaterializer
